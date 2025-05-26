@@ -1,0 +1,43 @@
+name: Update Sitemap
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 0 * * *'  # Update sitemap setiap hari pukul 00:00 UTC (07:00 WIB)
+
+permissions:
+  contents: write  # Izin untuk menulis ke repository
+
+jobs:
+  update_sitemap:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install pytz
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt || true  # Jika ada dependency, tambahkan di requirements.txt
+
+      - name: Generate sitemap
+        run: python $GITHUB_WORKSPACE/generate_sitemap.py # Jalankan script untuk membuat sitemap.xml
+
+      - name: Commit and push changes
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add sitemap.xml
+          git commit -m "Update sitemap.xml" || echo "No changes to commit"
+          git push "https://${GH_TOKEN}@github.com/gardeninginteractive/gardeninginteractive.github.io.git" main
